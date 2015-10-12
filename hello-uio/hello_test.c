@@ -19,10 +19,13 @@ int main()
 		printf("mmap failed\n");
 		return -1;
 	}
+
+	sleep(5);
+
 	printf("p = %p\n", p);
 	printf("count = %u\n", *p);
 	printf("unmap\n");
-	//munmap(p, 8);
+	munmap(p, 8);
 
 	close(fd);
 	return 0;

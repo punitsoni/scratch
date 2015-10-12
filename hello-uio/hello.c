@@ -9,13 +9,14 @@
 
 #define DRIVER_NAME "hello"
 
-#define HELLO_MEMSIZE 32
+#define HELLO_MEMSIZE 4096
 #define HELLO_FREQ_HZ 1
 
 struct uio_info hello_uinfo = {
 	.name = DRIVER_NAME,
 	.version = "0.0",
 	.irq = UIO_IRQ_CUSTOM,
+	.priv = NULL,
 };
 
 struct hello_device
@@ -33,7 +34,6 @@ static void hello_timer_func(unsigned long data)
 {
 	u32 *addr;
 	struct hello_device *hdev = (struct hello_device *)data;
-	//H_INFO("");
 	addr = (u32 *) hdev->uinfo->mem[0].addr;
 	*addr = hdev->count++;
 	H_INFO("notify count = %d", hdev->count);
@@ -56,8 +56,33 @@ static int hello_start(struct hello_device *hdev)
 
 static int hello_stop(struct hello_device *hdev)
 {
-	H_ERR("");
+	H_INFO("");
 	del_timer(&hdev->timer);
+	return 0;
+}
+
+static int hello_open(struct uio_info *uinfo, struct inode *inode)
+{
+	int rc = 0;
+	struct hello_device *hdev;
+	H_INFO("");
+	hdev = (struct hello_device *) uinfo->priv;
+	rc = hello_start(hdev);
+	if (rc) {
+		H_ERR("failed");
+		goto ret;
+	}
+	return 0;
+ret:
+	return rc;
+}
+
+static int hello_release(struct uio_info *uinfo, struct inode *inode)
+{
+	struct hello_device *hdev;
+	H_INFO("");
+	hdev = (struct hello_device *) uinfo->priv;
+	hello_stop(hdev);
 	return 0;
 }
 
@@ -67,15 +92,19 @@ static int hello_probe(struct platform_device *pdev)
 	H_INFO("");
 	hdev.pdev = pdev;
 	hdev.uinfo = &hello_uinfo;
-	hdev.uinfo->mem[0].addr = (unsigned long) kmalloc(HELLO_MEMSIZE,
+	hdev.uinfo->mem[0].addr = (unsigned long) kzalloc(HELLO_MEMSIZE,
 							    GFP_KERNEL);
 	if (!hdev.uinfo->mem[0].addr) {
 		H_ERR("kmalloc failed");
 		rc = -ENOMEM;
 		goto ret;
 	}
+
 	hdev.uinfo->mem[0].memtype = UIO_MEM_LOGICAL;
 	hdev.uinfo->mem[0].size = HELLO_MEMSIZE;
+	hdev.uinfo->priv = (void *)&hdev;
+	hdev.uinfo->open = hello_open;
+	hdev.uinfo->release = hello_release;
 
 	if (uio_register_device(&pdev->dev, hdev.uinfo)) {
 		H_ERR("uio_register_device failed");
@@ -84,8 +113,6 @@ static int hello_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, &hdev);
-
-	hello_start(&hdev);
 	return 0;
 
 free_mem:
@@ -99,7 +126,6 @@ static int hello_remove(struct platform_device *pdev)
 	struct hello_device *hdev;
 	H_INFO("");
 	hdev = (struct hello_device *) platform_get_drvdata(pdev);
-	hello_stop(hdev);
 	uio_unregister_device(hdev->uinfo);
 	kfree((void*)hdev->uinfo->mem[0].addr);
 	return 0;
