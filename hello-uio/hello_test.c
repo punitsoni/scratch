@@ -14,7 +14,7 @@ int main()
 
 	printf("map\n");
 
-	uint32_t *p = mmap(NULL, 16, PROT_READ, MAP_SHARED, fd, 0);
+	uint32_t *p = mmap(NULL, 8, PROT_READ, MAP_SHARED, fd, 0);
 	if (p == MAP_FAILED) {
 		printf("mmap failed\n");
 		return -1;
@@ -22,7 +22,7 @@ int main()
 	printf("p = %p\n", p);
 	printf("count = %u\n", *p);
 	printf("unmap\n");
-	munmap(p, 16);
+	//munmap(p, 8);
 
 	close(fd);
 	return 0;

@@ -12,6 +12,7 @@ module:
 
 clean:
 	make -C $(KDIR) M=$(PWD) clean
+	rm -rf hello-test
 
 test:
 	$(CC) hello_test.c -o hello-test
