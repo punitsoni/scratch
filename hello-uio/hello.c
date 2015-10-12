@@ -3,12 +3,14 @@
 #include <linux/platform_device.h>
 #include <linux/uio_driver.h>
 #include <linux/slab.h>
+#include <linux/timer.h>
 
 #include "hello_log.h"
 
 #define DRIVER_NAME "hello"
 
 #define HELLO_MEMSIZE 32
+#define HELLO_FREQ_HZ 1
 
 struct uio_info hello_uinfo = {
 	.name = DRIVER_NAME,
@@ -20,9 +22,44 @@ struct hello_device
 {
 	struct platform_device *pdev;
 	struct uio_info *uinfo;
+	struct timer_list timer;
+	u32 freq;
+	u32 count;
 };
 
 struct hello_device hdev;
+
+static void hello_timer_func(unsigned long data)
+{
+	u32 *addr;
+	struct hello_device *hdev = (struct hello_device *)data;
+	//H_INFO("");
+	addr = (u32 *) hdev->uinfo->mem[0].addr;
+	*addr = hdev->count++;
+	H_INFO("notify count = %d", hdev->count);
+	/* notify event to user space */
+	uio_event_notify(hdev->uinfo);
+	mod_timer(&hdev->timer, jiffies + msecs_to_jiffies(1000 / hdev->freq));
+}
+
+static int hello_start(struct hello_device *hdev)
+{
+	H_INFO("");
+	hdev->count = 0;
+	hdev->freq = HELLO_FREQ_HZ;
+	init_timer(&hdev->timer);
+	hdev->timer.data = (unsigned long) hdev;
+	hdev->timer.function = hello_timer_func;
+	mod_timer(&hdev->timer, jiffies + msecs_to_jiffies(1000 / hdev->freq));
+	return 0;
+}
+
+static int hello_stop(struct hello_device *hdev)
+{
+	H_ERR("");
+	del_timer(&hdev->timer);
+	return 0;
+}
 
 static int hello_probe(struct platform_device *pdev)
 {
@@ -45,6 +82,10 @@ static int hello_probe(struct platform_device *pdev)
 		rc = -ENODEV;
 		goto free_mem;
 	}
+
+	platform_set_drvdata(pdev, &hdev);
+
+	hello_start(&hdev);
 	return 0;
 
 free_mem:
@@ -55,9 +96,12 @@ ret:
 
 static int hello_remove(struct platform_device *pdev)
 {
+	struct hello_device *hdev;
 	H_INFO("");
-	uio_unregister_device(hdev.uinfo);
-	kfree((void*)hdev.uinfo->mem[0].addr);
+	hdev = (struct hello_device *) platform_get_drvdata(pdev);
+	hello_stop(hdev);
+	uio_unregister_device(hdev->uinfo);
+	kfree((void*)hdev->uinfo->mem[0].addr);
 	return 0;
 }
 

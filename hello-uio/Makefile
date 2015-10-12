@@ -5,8 +5,14 @@ obj-m += $(TARGET).o
 
 $(TARGET)-objs := hello.o
 
-all:
+all: module test
+
+module:
 	make -C $(KDIR) M=$(PWD) modules
 
 clean:
 	make -C $(KDIR) M=$(PWD) clean
+
+test:
+	$(CC) hello_test.c -o hello-test
+
