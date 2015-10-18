@@ -5,10 +5,7 @@
 #include "log.h"
 #include "uv4l2.h"
 
-#define DEV_IDS_MAX 2
-
 using namespace std;
-
 
 Uv4l2Device::Uv4l2Device()
 {
@@ -32,8 +29,9 @@ int Uv4l2Device::open()
     }
     char dummyFile[32];
     snprintf(dummyFile, 32, "/tmp/dummy%d", id);
-    fd = ::open(dummyFile, O_RDWR|O_CREAT);
+    fd = creat(dummyFile, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd < 0) {
+        perror("");
         ERR("failed");
         rc = fd;
         goto ret;
@@ -53,21 +51,14 @@ int Uv4l2Device::close()
         rc = -1;
         goto ret;
     }
-    return ::close(fd);
+    return 0;
 ret:
     return rc;
 }
 
-int uv4l2_close(int fd)
+int Uv4l2Device::ioctl(uint32_t request, void *arg)
 {
     int rc = 0;
-    INFO("fd = %d", fd);
-    return rc;
-}
-
-int uv4l2_ioctl(int fd, unsigned long request, char *argp)
-{
-    int rc=0;
-    INFO("fd=%d, req=0x%0lx", fd, request);
+    INFO("req=%x, arg=%p", request, arg);
     return rc;
 }

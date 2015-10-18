@@ -23,6 +23,7 @@ ioctl_fn_type orig_ioctl;
 extern "C" {
 int open(const char *pathname, int flags);
 int close(int fd);
+int ioctl(int fd, unsigned long request, char *argp);
 }
 
 const int NUM_DEVICES = 2;
@@ -42,6 +43,15 @@ static Uv4l2Device *getDevice(int id)
 {
     devicePool[id].id = id;
     return &devicePool[id];
+}
+
+static Uv4l2Device *getDeviceFromFd(int fd)
+{
+    auto it = deviceMap.find(fd);
+    if (it == deviceMap.end()) {
+        return NULL;
+    }
+    return it->second;
 }
 
 int uv4l2_get_devid(const char *path)
@@ -86,21 +96,30 @@ ret:
 
 int close(int fd)
 {
-    return 0;
-    //return orig_close(fd);
-    //return uv4l2_close(fd);
+    int rc = 0;
+    INFO("");
+    Uv4l2Device *dev = getDeviceFromFd(fd);
+    if (dev) {
+        dev->close();
+    }
+    return orig_close(fd);
+ret:        
+    return rc;
 }
 
 int ioctl(int fd, unsigned long request, char *argp)
 {
-    #if 0
-    int rc;
-    rc = uv4l2_ioctl(fd, request, argp);
-    if (rc < 0) {
+    int rc = 0;
+    INFO("fd=%d", fd);
+    Uv4l2Device *dev = getDeviceFromFd(fd);
+    if (!dev) {
+        rc = -1;
+        INFO("non-uv4l2 device");
         return orig_ioctl(fd, request, argp);
     }
-    #endif
-    return 0;
+    return dev->ioctl(request, argp);
+ret:        
+    return rc;
 }
 
 static void uv4l2_init() __attribute__((constructor));
