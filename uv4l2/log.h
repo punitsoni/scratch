@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define INFO(fmt, args...) do { \
-    fprintf(stderr, "I %s:%d, " fmt "\n", __func__, __LINE__, ##args); \
+    fprintf(stderr, "I %s:%d, " fmt "\n", __FUNCTION__, __LINE__, ##args); \
 } while (0)
 
 #define ERR(fmt, args...) do { \

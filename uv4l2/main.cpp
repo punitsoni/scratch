@@ -14,12 +14,15 @@ int main()
         ERR("open failed");
         goto ret;
     }
-    INFO("query caps");
+    INFO("querying caps");
     rc = ioctl(fd, VIDIOC_QUERYCAP, &cap);
     if (rc < 0) {
         ERR("failed");
         goto close_fd;
     }
+
+
+
     INFO("close device");
     close(fd);
     return 0;

@@ -34,6 +34,7 @@ Uv4l2Device devicePool[NUM_DEVICES];
 
 static void initDevicePool()
 {
+    INFO("");
     for(int i=0; i < NUM_DEVICES; i++) {
         devicePool[i].id = i;
     }
@@ -70,6 +71,7 @@ int open(const char *pathname, int flags)
 {
     int rc;
     int fd;
+    char dummyFile[32];
     INFO("path = %s", pathname);
     int id = uv4l2_get_devid(pathname);
     if (id < 0) {
@@ -82,14 +84,23 @@ int open(const char *pathname, int flags)
         ERR("failed");
         goto ret;
     }
-    fd = dev->open();
+    rc = dev->open();
+    if (rc < 0) {
+        ERR("failed");
+        goto ret;
+    }
+    /* create a dummy file to get a unique fd representing this device */
+    fd = createDummyFile(id);
     if (fd < 0) {
         ERR("failed");
         rc = fd;
-        goto ret;
+        goto close_dev;
     }
     deviceMap[fd] = dev;
+    INFO("success, fd=%d", fd);
     return fd;
+close_dev:
+    dev->close();
 ret:
     return rc;
 }
