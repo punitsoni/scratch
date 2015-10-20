@@ -18,7 +18,7 @@ int createDummyFile(int id)
     fd = creat(dummyFile, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd < 0) {
         ERR("failed");
-        perror("");        
+        perror("");
     }
     return fd;
 }
@@ -61,7 +61,6 @@ int Uv4l2Device::querycap(struct v4l2_capability *cap)
     strncpy((char *) cap->driver, DRIVER_NAME, CAP_DRVNAME_SIZE_MAX);
     cap->capabilities |= V4L2_CAP_VIDEO_CAPTURE;
     cap->capabilities |= V4L2_CAP_STREAMING;
-
     cap->device_caps = cap->capabilities;
     return 0;
 }
@@ -111,7 +110,6 @@ int Uv4l2Device::streamOff(int *type)
 int Uv4l2Device::ioctl(uint32_t request, void *arg)
 {
     int rc = 0;
-    INFO("req=%x, arg=%p", request, arg);
     if (!arg) {
         ERR("failed, arg=NULL");
         rc = -1;
@@ -152,7 +150,7 @@ int Uv4l2Device::ioctl(uint32_t request, void *arg)
         //rc = this->setCtrl((int *) arg);
         break;
     default:
-        ERR("invalid request");
+        ERR("invalid request 0x%x", request);
         rc = -1;
         break;
     }
