@@ -11,6 +11,7 @@
 #include "uv4l2.h"
 
 using namespace std;
+using namespace uv4l2;
 
 typedef int (*open_fn_type)(const char *pathname, int flags);
 typedef int (*close_fn_type)(int fd);

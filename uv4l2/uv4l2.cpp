@@ -13,6 +13,8 @@ using namespace std;
 #define DRIVER_NAME "domino"
 #define CAP_DRVNAME_SIZE_MAX 16
 
+namespace uv4l2 {
+
 int createDummyFile(int id)
 {
     int fd;
@@ -62,8 +64,13 @@ void *Uv4l2Device::mmap(void *addr, size_t len, int prot,
                         int flags, off_t offset)
 {
     void *mapAddr;
-    int index = offset / mappedBufs[0].v4l2Buf.length;
+    uint32_t index = offset / mappedBufs[0].v4l2Buf.length;
     INFO("index=%d", index);
+
+    if (index >= mappedBufs.size()) {
+        ERR("invalid offset %u", offset);
+        goto ret;
+    }
     mapAddr = mappedBufs[index].vaddr;
     return mapAddr;
 ret:
@@ -173,8 +180,8 @@ int Uv4l2Device::queryBuf(struct v4l2_buffer *buf)
         rc = -EINVAL;
         goto ret;
     }
-    if (buf->index < 0 || buf->index > mappedBufs.size()) {
-        ERR("index %d out of range", buf->index);
+    if (buf->index >= mappedBufs.size()) {
+        ERR("index %u out of range", buf->index);
         rc = -EINVAL;
         goto ret;
     }
@@ -187,25 +194,25 @@ ret:
 int Uv4l2Device::qbuf(struct v4l2_buffer *buf)
 {
     INFO("");
-    return 0;
+    return -1;
 }
 
 int Uv4l2Device::dqbuf(struct v4l2_buffer *buf)
 {
     INFO("");
-    return 0;
+    return -1;
 }
 
 int Uv4l2Device::streamOn(int *type)
 {
     INFO("");
-    return 0;
+    return -1;
 }
 
 int Uv4l2Device::streamOff(int *type)
 {
     INFO("");
-    return 0;
+    return -1;
 }
 
 int Uv4l2Device::ioctl(uint32_t request, void *arg)
@@ -258,3 +265,5 @@ int Uv4l2Device::ioctl(uint32_t request, void *arg)
 ret:
     return rc;
 }
+
+}; /* namespace uv4l2 */

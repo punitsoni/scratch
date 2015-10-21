@@ -6,6 +6,8 @@
 
 #include <vector>
 
+namespace uv4l2 {
+
 struct MappedBuffer {
     struct v4l2_buffer v4l2Buf;
     void *vaddr;
@@ -40,5 +42,7 @@ private:
 };
 
 int createDummyFile(int id);
+
+};
 
 #endif
