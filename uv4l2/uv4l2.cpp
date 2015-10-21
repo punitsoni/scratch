@@ -1,6 +1,10 @@
 #include <string.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <errno.h>
+
 #include "log.h"
 #include "uv4l2.h"
 
@@ -8,7 +12,6 @@ using namespace std;
 
 #define DRIVER_NAME "domino"
 #define CAP_DRVNAME_SIZE_MAX 16
-
 
 int createDummyFile(int id)
 {
@@ -49,12 +52,33 @@ int Uv4l2Device::close()
         rc = -1;
         goto ret;
     }
+    releaseMappedBuffers();
     return 0;
 ret:
     return rc;
 }
 
-int Uv4l2Device::querycap(struct v4l2_capability *cap)
+void *Uv4l2Device::mmap(void *addr, size_t len, int prot,
+                        int flags, off_t offset)
+{
+    void *mapAddr;
+    int index = offset / mappedBufs[0].v4l2Buf.length;
+    INFO("index=%d", index);
+    mapAddr = mappedBufs[index].vaddr;
+    return mapAddr;
+ret:
+    return MAP_FAILED;
+}
+
+static inline bool isBufTypeValid(int type)
+{
+    if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+        return true;
+    }
+    return false;
+}
+
+int Uv4l2Device::queryCap(struct v4l2_capability *cap)
 {
     INFO("");
     memset(cap, 0x00, sizeof(struct v4l2_capability));
@@ -68,19 +92,96 @@ int Uv4l2Device::querycap(struct v4l2_capability *cap)
 int Uv4l2Device::setFormat(struct v4l2_format *fmt)
 {
     INFO("");
+    memcpy(&currentFormat, fmt, sizeof(struct v4l2_format));
     return 0;
+}
+
+int Uv4l2Device::releaseMappedBuffers()
+{
+    for(int i=0; i<mappedBufs.size(); i++) {
+        free(mappedBufs[i].vaddr);
+    }
+    mappedBufs.clear();
+    return 0;
+}
+
+int Uv4l2Device::createMappedBuffers(int count)
+{
+    int rc;
+    MappedBuffer buf = {0};
+
+    if (count == 0) {
+        return releaseMappedBuffers();
+    }
+
+    mappedBufs.resize(count);
+    for (int i=0; i<count; i++) {
+        buf.v4l2Buf.index = i;
+        buf.v4l2Buf.length = currentFormat.fmt.pix.width *
+            currentFormat.fmt.pix.height;
+        buf.v4l2Buf.memory = V4L2_MEMORY_MMAP;
+        buf.v4l2Buf.m.offset = i * buf.v4l2Buf.length;
+        buf.vaddr = malloc(buf.v4l2Buf.length);
+        if (!buf.vaddr) {
+            ERR("malloc failed");
+            rc = -ENOMEM;
+            goto ret;
+        }
+        mappedBufs[i] = buf;
+        INFO("buffer %d created", i);
+    }
+    return 0;
+ret:
+    return rc;
 }
 
 int Uv4l2Device::reqBufs(struct v4l2_requestbuffers *req)
 {
-    INFO("");
+    int rc;
+    DBG_LO("");
+    if (!isBufTypeValid(req->type)) {
+        ERR("unsupported buf type %d", req->type);
+        rc = -EINVAL;
+        goto ret;
+    }
+    switch (req->memory) {
+    case V4L2_MEMORY_MMAP:
+        INFO("count = %d", req->count);
+        rc = createMappedBuffers(req->count);
+        if (rc) {
+            ERR("failed");
+            rc = -ENOMEM;
+            goto ret;
+        }
+        break;
+    default:
+        ERR("unsupported memory type %d", req->memory);
+        rc = -EINVAL;
+        goto ret;
+    }
     return 0;
+ret:
+    return rc;
 }
 
 int Uv4l2Device::queryBuf(struct v4l2_buffer *buf)
 {
+    int rc;
     INFO("");
+    if (!isBufTypeValid(buf->type)) {
+        ERR("unsupported buf type %d", buf->type);
+        rc = -EINVAL;
+        goto ret;
+    }
+    if (buf->index < 0 || buf->index > mappedBufs.size()) {
+        ERR("index %d out of range", buf->index);
+        rc = -EINVAL;
+        goto ret;
+    }
+    *buf = mappedBufs[buf->index].v4l2Buf;
     return 0;
+ret:
+    return rc;
 }
 
 int Uv4l2Device::qbuf(struct v4l2_buffer *buf)
@@ -117,7 +218,7 @@ int Uv4l2Device::ioctl(uint32_t request, void *arg)
     }
     switch(request) {
     case VIDIOC_QUERYCAP:
-        rc = this->querycap((struct v4l2_capability *) arg);
+        rc = this->queryCap((struct v4l2_capability *) arg);
         break;
     case VIDIOC_S_FMT:
         rc = this->setFormat((struct v4l2_format *) arg);

@@ -11,4 +11,10 @@
     fprintf(stderr, "E %s:%d, " fmt "\n", __func__, __LINE__, ##args); \
 } while (0)
 
+#define DBG_HI(fmt, args...) do { \
+    fprintf(stderr, "D %s:%d, " fmt "\n", __func__, __LINE__, ##args); \
+} while (0)
+
+#define DBG_LO(fmt, args...) do {} while (0)
+
 #endif

@@ -15,15 +15,20 @@ using namespace std;
 typedef int (*open_fn_type)(const char *pathname, int flags);
 typedef int (*close_fn_type)(int fd);
 typedef int (*ioctl_fn_type)(int fd, unsigned long request, char *argp);
+typedef void* (*mmap_fn_type) (void *addr, size_t len, int prot, int flags,
+       int fildes, off_t off);
 
 open_fn_type orig_open;
 close_fn_type orig_close;
 ioctl_fn_type orig_ioctl;
+mmap_fn_type orig_mmap;
 
 extern "C" {
 int open(const char *pathname, int flags);
 int close(int fd);
 int ioctl(int fd, unsigned long request, char *argp);
+void *mmap(void *addr, size_t len, int prot, int flags,
+       int fd, off_t offset);
 }
 
 const int NUM_DEVICES = 2;
@@ -32,21 +37,21 @@ const int NUM_DEVICES = 2;
 std::map <int, Uv4l2Device*> deviceMap;
 Uv4l2Device devicePool[NUM_DEVICES];
 
-static void initDevicePool()
+static inline void initDevicePool()
 {
-    INFO("");
+    DBG_LO("");
     for(int i=0; i < NUM_DEVICES; i++) {
         devicePool[i].id = i;
     }
 }
 
-static Uv4l2Device *getDevice(int id)
+static inline Uv4l2Device *getDevice(int id)
 {
     devicePool[id].id = id;
     return &devicePool[id];
 }
 
-static Uv4l2Device *getDeviceFromFd(int fd)
+static inline Uv4l2Device *getDeviceFromFd(int fd)
 {
     auto it = deviceMap.find(fd);
     if (it == deviceMap.end()) {
@@ -72,7 +77,7 @@ int open(const char *pathname, int flags)
     int rc;
     int fd;
     char dummyFile[32];
-    INFO("path = %s", pathname);
+    DBG_HI("path = %s", pathname);
     int id = uv4l2_get_devid(pathname);
     if (id < 0) {
         INFO("non-uv4l2 device, %s", pathname);
@@ -107,37 +112,44 @@ ret:
 
 int close(int fd)
 {
-    int rc = 0;
-    INFO("");
+    DBG_LO("");
     Uv4l2Device *dev = getDeviceFromFd(fd);
     if (dev) {
         dev->close();
     }
+    /* even if dev exists, we need to call orig_close(),
+     to close the dummy file created in open()*/
     return orig_close(fd);
-ret:        
-    return rc;
 }
 
 int ioctl(int fd, unsigned long request, char *argp)
 {
-    int rc = 0;
-    INFO("fd=%d", fd);
+    DBG_LO("fd=%d", fd);
     Uv4l2Device *dev = getDeviceFromFd(fd);
     if (!dev) {
-        rc = -1;
         INFO("non-uv4l2 device");
         return orig_ioctl(fd, request, argp);
     }
     return dev->ioctl(request, argp);
-ret:        
-    return rc;
+}
+
+void *mmap(void *addr, size_t len, int prot, int flags,
+       int fd, off_t offset)
+{
+    DBG_LO("fd = %d", fd);
+    Uv4l2Device *dev = getDeviceFromFd(fd);
+    if (dev) {
+        return dev->mmap(addr, len, prot, flags, offset);
+    }
+    return orig_mmap(addr, len, prot, flags, fd, offset);
 }
 
 static void uv4l2_init() __attribute__((constructor));
 void uv4l2_init() {
-    INFO("");
+    DBG_LO("");
     initDevicePool();
     orig_open = (open_fn_type) dlsym(RTLD_NEXT,"open");
     orig_close = (close_fn_type) dlsym(RTLD_NEXT,"close");
     orig_ioctl = (ioctl_fn_type) dlsym(RTLD_NEXT, "ioctl");
+    orig_mmap = (mmap_fn_type) dlsym(RTLD_NEXT, "mmap");
 }
