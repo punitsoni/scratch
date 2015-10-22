@@ -32,6 +32,12 @@ Uv4l2Device::Uv4l2Device()
 {
 }
 
+void Uv4l2Device::onFrame(uint8_t *data)
+{
+    INFO();
+    return;
+}
+
 int Uv4l2Device::open()
 {
     int rc=0;
@@ -68,7 +74,7 @@ void *Uv4l2Device::mmap(void *addr, size_t len, int prot,
     INFO("index=%d", index);
 
     if (index >= mappedBufs.size()) {
-        ERR("invalid offset %u", offset);
+        ERR("invalid offset %ld", offset);
         goto ret;
     }
     mapAddr = mappedBufs[index].vaddr;
@@ -105,6 +111,7 @@ int Uv4l2Device::setFormat(struct v4l2_format *fmt)
 
 int Uv4l2Device::releaseMappedBuffers()
 {
+    INFO("");
     for(int i=0; i<mappedBufs.size(); i++) {
         free(mappedBufs[i].vaddr);
     }
@@ -206,13 +213,16 @@ int Uv4l2Device::dqbuf(struct v4l2_buffer *buf)
 int Uv4l2Device::streamOn(int *type)
 {
     INFO("");
-    return -1;
+    gen.setListener(this);
+    gen.start();
+    return 0;
 }
 
 int Uv4l2Device::streamOff(int *type)
 {
     INFO("");
-    return -1;
+    gen.stop();
+    return 0;
 }
 
 int Uv4l2Device::ioctl(uint32_t request, void *arg)

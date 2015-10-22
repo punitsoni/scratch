@@ -6,6 +6,8 @@
 
 #include <vector>
 
+#include "testgen.h"
+
 namespace uv4l2 {
 
 struct MappedBuffer {
@@ -13,7 +15,7 @@ struct MappedBuffer {
     void *vaddr;
 };
 
-class Uv4l2Device
+class Uv4l2Device : TestGenListener
 {
 public:
     int id;
@@ -22,6 +24,7 @@ public:
     int close();
     int ioctl(uint32_t request, void *arg);
     void* mmap(void *addr, size_t len, int prot, int flags, off_t offset);
+    virtual void onFrame(uint8_t *data);
 private:
     // ioctl handlers
     int queryCap(struct v4l2_capability *cap);
@@ -39,6 +42,8 @@ private:
     std::vector<MappedBuffer> mappedBufs;
     struct v4l2_format currentFormat;
     bool isOpen = false;
+
+    TestGen gen;
 };
 
 int createDummyFile(int id);
