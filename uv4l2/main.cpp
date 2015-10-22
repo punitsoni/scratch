@@ -76,6 +76,13 @@ int main()
     }
 
     // enqueue buffers in driver
+    for (int i=0; i<BUF_COUNT; i++) {
+        rc = ioctl(fd, VIDIOC_QBUF, &bufs[i]);
+        if (rc) {
+            ERR("qbuf failed");
+            goto close_fd;
+        }
+    }
 
     // stream on
     rc = ioctl(fd, VIDIOC_STREAMON, &bufs[0].type);

@@ -5,6 +5,7 @@
 #include <linux/videodev2.h>
 
 #include <vector>
+#include <queue>
 
 #include "testgen.h"
 
@@ -42,6 +43,9 @@ private:
     std::vector<MappedBuffer> mappedBufs;
     struct v4l2_format currentFormat;
     bool isOpen = false;
+
+    std::queue<MappedBuffer> inQueue;
+    std::queue<MappedBuffer> outQueue;
 
     TestGen gen;
 };

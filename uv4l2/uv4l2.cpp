@@ -201,7 +201,7 @@ ret:
 int Uv4l2Device::qbuf(struct v4l2_buffer *buf)
 {
     INFO("");
-    return -1;
+    return 0;
 }
 
 int Uv4l2Device::dqbuf(struct v4l2_buffer *buf)
