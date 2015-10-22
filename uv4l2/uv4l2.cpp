@@ -77,7 +77,9 @@ void *Uv4l2Device::mmap(void *addr, size_t len, int prot,
         ERR("invalid offset %ld", offset);
         goto ret;
     }
+    mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_MAPPED;
     mapAddr = mappedBufs[index].vaddr;
+
     return mapAddr;
 ret:
     return MAP_FAILED;
@@ -200,14 +202,26 @@ ret:
 
 int Uv4l2Device::qbuf(struct v4l2_buffer *buf)
 {
+    int rc;
     INFO("");
+    if (buf->index >= mappedBufs.size()) {
+        ERR("failed");
+        rc = -EINVAL;
+        goto ret;
+    }
+    //TODO: error checking for buffer state (flags)
+    mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_QUEUED;
+    inQueue.push(mappedBufs[index]);
     return 0;
+ret:
+    return rc;
 }
 
 int Uv4l2Device::dqbuf(struct v4l2_buffer *buf)
 {
     INFO("");
-    return -1;
+    MappedBuffer mbuf
+    return 0;
 }
 
 int Uv4l2Device::streamOn(int *type)
