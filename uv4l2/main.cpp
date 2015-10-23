@@ -4,6 +4,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <linux/videodev2.h>
+#include <poll.h>
 
 #include "log.h"
 
@@ -15,7 +16,10 @@ int main()
     struct v4l2_format fmt = {0};
     struct v4l2_requestbuffers req = {0};
     struct v4l2_buffer bufs[BUF_COUNT];
+    struct v4l2_buffer buf;
     uint8_t *buffers[BUF_COUNT];
+    struct pollfd pfds[2];
+    int count;
 
     int rc;
     int fd = open("/dev/video0", O_RDWR);
@@ -61,7 +65,7 @@ int main()
             ERR("querybuf failed");
             goto close_fd;
         }
-        INFO("index=%d, length=%u, offset=%u",
+        DBG_LO("index=%d, length=%u, offset=%u",
         bufs[i].index, bufs[i].length, bufs[i].m.offset);
     }
 
@@ -91,9 +95,29 @@ int main()
         goto close_fd;
     }
 
+    count = 10;
     // perform streaming operations
-
-    sleep(5);
+    pfds[0].fd = fd;
+    pfds[0].events = POLLIN;
+    while (count) {
+        rc = poll(pfds, 1, -1);
+        if (rc == -1) {
+            ERR("poll() failed");
+            goto close_fd;
+        } else if (rc == 0) {
+            ERR("poll timed out");
+            goto close_fd;
+        }
+        if (pfds[0].revents & POLLIN) {
+            INFO("count = %d", count);
+            rc = ioctl(fd, VIDIOC_DQBUF, &buf);
+            if (rc) {
+                ERR("dqbuf failed");
+                goto close_fd;
+            }
+        }
+        count--;
+    }
 
     rc = ioctl(fd, VIDIOC_STREAMOFF, &bufs[0].type);
     if (rc) {

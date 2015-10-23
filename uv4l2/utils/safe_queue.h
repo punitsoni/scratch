@@ -1,5 +1,4 @@
-#ifndef __SAFE_QUEUE_H__
-#define __SAFE_QUEUE_H__
+#pragma once
 
 template<typename T>
 class SafeQueue
@@ -7,11 +6,10 @@ class SafeQueue
 public:
     void push(const T & value);
     T pop();
+    bool tryPop();
     int size();
 private:
     std::mutex _mutex;
     std::condition_variable _cv;
     std::queue<T> _q;
 };
-
-#endif

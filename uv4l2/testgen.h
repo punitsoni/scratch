@@ -1,5 +1,4 @@
-#ifndef __TESTGEN_H__
-#define __TESTGEN_H__
+#pragma once
 
 #include <stdint.h>
 #include <thread>
@@ -16,16 +15,16 @@ public:
     int start();
     int stop();
     int config(int w, int h) { width = w; height = h; }
-    void setListener(TestGenListener *lis) { listener = lis; }
+    void setListener(TestGenListener *lis) { _listener = lis; }
+    bool isStreaming() { return _isStreaming; }
 private:
     int width = 0;
     int height = 0;
-    TestGenListener *listener;
+    TestGenListener *_listener;
     void threadFunc();
     bool stopRequested = false;
+    bool _isStreaming = false;
     std::thread th;
 };
 
 }; /* namespace uv4l2 */
-
-#endif

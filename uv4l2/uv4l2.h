@@ -1,5 +1,4 @@
-#ifndef __UV4L2_H__
-#define __UV4L2_H__
+#pragma once
 
 #include <stdint.h>
 #include <linux/videodev2.h>
@@ -16,6 +15,21 @@ struct MappedBuffer {
     void *vaddr;
 };
 
+class BufManager {
+public:
+    int releaseMappedBuffers();
+    int createMappedBuffers(int count, uint32_t size);
+    void *mapBuf(off_t offset);
+    int getBuf();
+    int bufDone();
+    int putBuf(uint32_t index);
+    MappedBuffer *findBuf(uint32_t index);
+private:
+    std::vector<MappedBuffer> _mappedBufs;
+    std::queue<MappedBuffer*> _inQueue;
+    std::queue<MappedBuffer*> _outQueue;
+};
+
 class Uv4l2Device : TestGenListener
 {
 public:
@@ -25,6 +39,7 @@ public:
     int close();
     int ioctl(uint32_t request, void *arg);
     void* mmap(void *addr, size_t len, int prot, int flags, off_t offset);
+    int poll();
     virtual void onFrame(uint8_t *data);
 private:
     // ioctl handlers
@@ -37,21 +52,13 @@ private:
     int streamOn(int *type);
     int streamOff(int *type);
 
-    int releaseMappedBuffers();
-    int createMappedBuffers(int count);
-
-    std::vector<MappedBuffer> mappedBufs;
+    BufManager bufMgr;
     struct v4l2_format currentFormat;
     bool isOpen = false;
-
-    std::queue<MappedBuffer> inQueue;
-    std::queue<MappedBuffer> outQueue;
-
     TestGen gen;
+
+    int _pipeReadFd;
+    int _pipeWriteFd;
 };
 
-int createDummyFile(int id);
-
 };
-
-#endif

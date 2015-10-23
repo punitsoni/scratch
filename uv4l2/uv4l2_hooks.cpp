@@ -6,9 +6,20 @@
 #include <string.h>
 
 #include <map>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "log.h"
 #include "uv4l2.h"
+
+extern "C" {
+int open(const char *pathname, int flags);
+int close(int fd);
+int ioctl(int fd, unsigned long request, char *argp);
+void *mmap(void *addr, size_t len, int prot, int flags,
+       int fd, off_t offset);
+}
 
 using namespace std;
 using namespace uv4l2;
@@ -23,14 +34,6 @@ open_fn_type orig_open;
 close_fn_type orig_close;
 ioctl_fn_type orig_ioctl;
 mmap_fn_type orig_mmap;
-
-extern "C" {
-int open(const char *pathname, int flags);
-int close(int fd);
-int ioctl(int fd, unsigned long request, char *argp);
-void *mmap(void *addr, size_t len, int prot, int flags,
-       int fd, off_t offset);
-}
 
 const int NUM_DEVICES = 2;
 
@@ -90,17 +93,11 @@ int open(const char *pathname, int flags)
         ERR("failed");
         goto ret;
     }
-    rc = dev->open();
-    if (rc < 0) {
-        ERR("failed");
-        goto ret;
-    }
-    /* create a dummy file to get a unique fd representing this device */
-    fd = createDummyFile(id);
+    fd = dev->open();
     if (fd < 0) {
         ERR("failed");
-        rc = fd;
-        goto close_dev;
+        rc = -1;
+        goto ret;
     }
     deviceMap[fd] = dev;
     INFO("success, fd=%d", fd);
@@ -119,7 +116,7 @@ int close(int fd)
         dev->close();
     }
     /* even if dev exists, we need to call orig_close(),
-     to close the dummy file created in open()*/
+     to close the dummy fd created in open()*/
     return orig_close(fd);
 }
 

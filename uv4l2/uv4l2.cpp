@@ -34,8 +34,14 @@ Uv4l2Device::Uv4l2Device()
 
 void Uv4l2Device::onFrame(uint8_t *data)
 {
-    INFO();
-    return;
+    int rc;
+    INFO("");
+    uint8_t dummyData = 0xFF;
+    rc = write(_pipeWriteFd, &dummyData, 1);
+    if (rc < 0) {
+        ERR("write failed\n");
+        return;
+    }
 }
 
 int Uv4l2Device::open()
@@ -46,8 +52,16 @@ int Uv4l2Device::open()
         rc = -1;
         goto ret;
     }
+    int fds[2];
+    rc = pipe(fds);
+    if (rc) {
+        ERR("pipe failed");
+        goto ret;
+    }
+    _pipeReadFd = fds[0];
+    _pipeWriteFd = fds[1];
     isOpen = true;
-    return 0;
+    return _pipeReadFd;
 ret:
     return rc;
 }
@@ -60,7 +74,11 @@ int Uv4l2Device::close()
         rc = -1;
         goto ret;
     }
-    releaseMappedBuffers();
+    bufMgr.releaseMappedBuffers();
+    if (gen.isStreaming()) {
+        gen.stop();
+    }
+    ::close(_pipeWriteFd);
     return 0;
 ret:
     return rc;
@@ -69,20 +87,12 @@ ret:
 void *Uv4l2Device::mmap(void *addr, size_t len, int prot,
                         int flags, off_t offset)
 {
-    void *mapAddr;
-    uint32_t index = offset / mappedBufs[0].v4l2Buf.length;
-    INFO("index=%d", index);
+    return bufMgr.mapBuf(offset);
+}
 
-    if (index >= mappedBufs.size()) {
-        ERR("invalid offset %ld", offset);
-        goto ret;
-    }
-    mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_MAPPED;
-    mapAddr = mappedBufs[index].vaddr;
-
-    return mapAddr;
-ret:
-    return MAP_FAILED;
+int Uv4l2Device::poll()
+{
+    return 0;
 }
 
 static inline bool isBufTypeValid(int type)
@@ -111,49 +121,10 @@ int Uv4l2Device::setFormat(struct v4l2_format *fmt)
     return 0;
 }
 
-int Uv4l2Device::releaseMappedBuffers()
-{
-    INFO("");
-    for(int i=0; i<mappedBufs.size(); i++) {
-        free(mappedBufs[i].vaddr);
-    }
-    mappedBufs.clear();
-    return 0;
-}
-
-int Uv4l2Device::createMappedBuffers(int count)
-{
-    int rc;
-    MappedBuffer buf = {0};
-
-    if (count == 0) {
-        return releaseMappedBuffers();
-    }
-
-    mappedBufs.resize(count);
-    for (int i=0; i<count; i++) {
-        buf.v4l2Buf.index = i;
-        buf.v4l2Buf.length = currentFormat.fmt.pix.width *
-            currentFormat.fmt.pix.height;
-        buf.v4l2Buf.memory = V4L2_MEMORY_MMAP;
-        buf.v4l2Buf.m.offset = i * buf.v4l2Buf.length;
-        buf.vaddr = malloc(buf.v4l2Buf.length);
-        if (!buf.vaddr) {
-            ERR("malloc failed");
-            rc = -ENOMEM;
-            goto ret;
-        }
-        mappedBufs[i] = buf;
-        INFO("buffer %d created", i);
-    }
-    return 0;
-ret:
-    return rc;
-}
-
 int Uv4l2Device::reqBufs(struct v4l2_requestbuffers *req)
 {
     int rc;
+    uint32_t size;
     DBG_LO("");
     if (!isBufTypeValid(req->type)) {
         ERR("unsupported buf type %d", req->type);
@@ -163,7 +134,8 @@ int Uv4l2Device::reqBufs(struct v4l2_requestbuffers *req)
     switch (req->memory) {
     case V4L2_MEMORY_MMAP:
         INFO("count = %d", req->count);
-        rc = createMappedBuffers(req->count);
+        size = currentFormat.fmt.pix.width * currentFormat.fmt.pix.height;
+        rc = bufMgr.createMappedBuffers(req->count, size);
         if (rc) {
             ERR("failed");
             rc = -ENOMEM;
@@ -183,18 +155,20 @@ ret:
 int Uv4l2Device::queryBuf(struct v4l2_buffer *buf)
 {
     int rc;
+    MappedBuffer *mbuf;
     INFO("");
     if (!isBufTypeValid(buf->type)) {
         ERR("unsupported buf type %d", buf->type);
         rc = -EINVAL;
         goto ret;
     }
-    if (buf->index >= mappedBufs.size()) {
-        ERR("index %u out of range", buf->index);
+    mbuf = bufMgr.findBuf(buf->index);
+    if (!mbuf) {
+        ERR("failed");
         rc = -EINVAL;
         goto ret;
     }
-    *buf = mappedBufs[buf->index].v4l2Buf;
+    *buf = mbuf->v4l2Buf;
     return 0;
 ret:
     return rc;
@@ -204,14 +178,13 @@ int Uv4l2Device::qbuf(struct v4l2_buffer *buf)
 {
     int rc;
     INFO("");
-    if (buf->index >= mappedBufs.size()) {
+
+    rc = bufMgr.putBuf(buf->index);
+    if (rc) {
         ERR("failed");
         rc = -EINVAL;
         goto ret;
     }
-    //TODO: error checking for buffer state (flags)
-    mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_QUEUED;
-    inQueue.push(mappedBufs[index]);
     return 0;
 ret:
     return rc;
@@ -219,9 +192,18 @@ ret:
 
 int Uv4l2Device::dqbuf(struct v4l2_buffer *buf)
 {
+    int rc;
     INFO("");
-    MappedBuffer mbuf
+    uint8_t dummyData;
+    rc = read(_pipeReadFd, &dummyData, 1);
+    if (rc != 1) {
+        ERR("read failed");
+        rc = -1;
+        goto ret;
+    }
     return 0;
+ret:
+    return rc;
 }
 
 int Uv4l2Device::streamOn(int *type)
@@ -289,5 +271,96 @@ int Uv4l2Device::ioctl(uint32_t request, void *arg)
 ret:
     return rc;
 }
+
+int BufManager::releaseMappedBuffers()
+{
+    INFO("");
+    for(int i=0; i<_mappedBufs.size(); i++) {
+        free(_mappedBufs[i].vaddr);
+    }
+    _mappedBufs.clear();
+    return 0;
+}
+
+int BufManager::createMappedBuffers(int count, uint32_t size)
+{
+    int rc;
+    MappedBuffer buf = {0};
+
+    if (count == 0) {
+        return releaseMappedBuffers();
+    }
+
+    _mappedBufs.resize(count);
+    for (int i=0; i<count; i++) {
+        buf.v4l2Buf.index = i;
+        buf.v4l2Buf.length = size;
+        buf.v4l2Buf.memory = V4L2_MEMORY_MMAP;
+        buf.v4l2Buf.m.offset = i * buf.v4l2Buf.length;
+        buf.vaddr = malloc(buf.v4l2Buf.length);
+        if (!buf.vaddr) {
+            ERR("malloc failed");
+            rc = -ENOMEM;
+            goto ret;
+        }
+        _mappedBufs[i] = buf;
+        INFO("buffer %d created", i);
+    }
+    return 0;
+ret:
+    return rc;
+}
+
+void *BufManager::mapBuf(off_t offset)
+{
+    void *mapAddr;
+    uint32_t index = offset / _mappedBufs[0].v4l2Buf.length;
+    INFO("index=%d", index);
+
+    if (index >= _mappedBufs.size()) {
+        ERR("invalid offset %ld", offset);
+        goto ret;
+    }
+    _mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_MAPPED;
+    mapAddr = _mappedBufs[index].vaddr;
+    return mapAddr;
+    ret:
+    return MAP_FAILED;
+}
+
+int BufManager::getBuf()
+{
+    _inQueue.pop();
+}
+
+int BufManager::putBuf(uint32_t index)
+{
+    int rc;
+    if (index >= _mappedBufs.size()) {
+        ERR("failed");
+        rc = -EINVAL;
+        goto ret;
+    }
+    //TODO: error checking for buffer state (flags)
+    _mappedBufs[index].v4l2Buf.flags |= V4L2_BUF_FLAG_QUEUED;
+    _inQueue.push(&_mappedBufs[index]);
+    return 0;
+ret:
+    return rc;
+}
+
+MappedBuffer* BufManager::findBuf(uint32_t index)
+{
+    MappedBuffer *mbuf;
+    if (index >= _mappedBufs.size()) {
+        ERR("failed");
+        goto ret;
+    }
+    return &_mappedBufs[index];
+ret:
+    return NULL;
+}
+
+
 
 }; /* namespace uv4l2 */
