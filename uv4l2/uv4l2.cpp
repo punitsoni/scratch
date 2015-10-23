@@ -78,6 +78,8 @@ int Uv4l2Device::close()
     if (gen.isStreaming()) {
         gen.stop();
     }
+    /* only close write fd here, read fd is closed using orig_close(),
+    closing it here will cause infinite recursion */
     ::close(_pipeWriteFd);
     return 0;
 ret:
