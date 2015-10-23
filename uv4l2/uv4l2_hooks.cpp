@@ -12,28 +12,32 @@
 
 #include "log.h"
 #include "uv4l2.h"
-
+#include <sys/stat.h>
 extern "C" {
+
 int open(const char *pathname, int flags);
 int close(int fd);
 int ioctl(int fd, unsigned long request, char *argp);
 void *mmap(void *addr, size_t len, int prot, int flags,
        int fd, off_t offset);
+int _lstat(const char *path, struct stat *buf);
 }
 
 using namespace std;
 using namespace uv4l2;
 
-typedef int (*open_fn_type)(const char *pathname, int flags);
-typedef int (*close_fn_type)(int fd);
-typedef int (*ioctl_fn_type)(int fd, unsigned long request, char *argp);
+typedef int (*open_fn_type) (const char *pathname, int flags);
+typedef int (*close_fn_type) (int fd);
+typedef int (*ioctl_fn_type) (int fd, unsigned long request, char *argp);
 typedef void* (*mmap_fn_type) (void *addr, size_t len, int prot, int flags,
        int fildes, off_t off);
+typedef int (*stat_fn_type) (const char *path, struct stat *buf);
 
 open_fn_type orig_open;
 close_fn_type orig_close;
 ioctl_fn_type orig_ioctl;
 mmap_fn_type orig_mmap;
+stat_fn_type orig_stat;
 
 const int NUM_DEVICES = 2;
 
@@ -142,6 +146,17 @@ void *mmap(void *addr, size_t len, int prot, int flags,
     return orig_mmap(addr, len, prot, flags, fd, offset);
 }
 
+int _lstat(const char *path, struct stat *buf)
+{
+    DBG_HI("");
+    int id = uv4l2_get_devid(path);
+    if (id < 0) {
+        INFO("non-uv4l2 device, %s", path);
+        return orig_stat(path, buf);
+    }
+    return -1;
+}
+
 static void uv4l2_init() __attribute__((constructor));
 void uv4l2_init() {
     DBG_LO("");
@@ -150,4 +165,5 @@ void uv4l2_init() {
     orig_close = (close_fn_type) dlsym(RTLD_NEXT,"close");
     orig_ioctl = (ioctl_fn_type) dlsym(RTLD_NEXT, "ioctl");
     orig_mmap = (mmap_fn_type) dlsym(RTLD_NEXT, "mmap");
+    orig_stat = (stat_fn_type) dlsym(RTLD_NEXT, "stat");
 }
