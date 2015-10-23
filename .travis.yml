@@ -1,1 +1,7 @@
 language: cpp
+
+before_script: ls
+
+script:
+    cd uv4l2
+    make
