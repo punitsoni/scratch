@@ -13,8 +13,8 @@
 int main()
 {
     struct v4l2_capability cap;
-    struct v4l2_format fmt = {0};
-    struct v4l2_requestbuffers req = {0};
+    struct v4l2_format fmt;
+    struct v4l2_requestbuffers req;
     struct v4l2_buffer bufs[BUF_COUNT];
     struct v4l2_buffer buf;
     uint8_t *buffers[BUF_COUNT];
