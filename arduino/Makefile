@@ -1,23 +1,28 @@
-SERIAL_PORT = /dev/tty.usbserial-A702PYFC
-
 PROJECT = led
 
-OBJS = led.o
+C_SRCS = led.o
 
-IDE_PATH = $(PWD)/arduino-1.5
+CXX_SRCS =
 
-CC = avr-gcc
-LD = avr-gcc
-OBJCPY = avr-objcopy
+################################################################################
+all: $(PROJECT).hex
 
-CFLAGS = -Os -DF_CPU=16000000UL -mmcu=atmega328p
-LDFLAGS = -mmcu=atmega328p
+include config.mk
+
+OBJS = $(patsubst %.c,%.o,$(C_SRCS))
+OBJS += $(patsubst %.cpp,%.o,$(CXX_SRCS))
+
+CFLAGS = $(ARD_CFLAGS)
+LDFLAGS = $(ARD_LDFLAGS)
 
 $(PROJECT).hex: $(PROJECT)
-	$(OBJCPY) -O ihex -R .eeprom $(PROJECT) $(PROJECT).hex
+	$(OBJCOPY) -O ihex -R .eeprom $(PROJECT) $(PROJECT).hex
 
-$(PROJECT): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) -o $(PROJECT)
+$(PROJECT): $(OBJS) libarduino.a
+	$(LD) $(LDFLAGS) $(OBJS) -o $(PROJECT) libarduino.a
+
+libarduino.a:
+	make -f libarduino.mk
 
 upload: $(PROJECT).hex
 	avrdude -F -V -c arduino -p ATMEGA328P -P $(SERIAL_PORT) \
@@ -25,3 +30,8 @@ upload: $(PROJECT).hex
 
 clean:
 	rm -f $(OBJS) $(PROJECT) $(PROJECT).hex
+
+cleanlib: clean
+	make -f libarduino.mk clean
+
+cleanall: clean clean-src cleanlib
