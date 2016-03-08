@@ -14,8 +14,9 @@ ARD_CFLAGS = -Os -DF_CPU=16000000UL -mmcu=atmega328p
 ARD_CFLAGS += -I $(ARD_SRC_PATH)/hardware/arduino/avr/cores/arduino
 ARD_CFLAGS += -I $(ARD_SRC_PATH)/hardware/arduino/avr/variants/$(ARD_BOARD_VARIANT)
 
-#ARD_LDFLAGS = -mmcu=atmega328p
-ARD_LDFLAGS += -L $(PWD)
+ARD_CXXFLAGS = $(ARD_CFLAGS)
+
+ARD_LDFLAGS +=
 
 arduino-src:
 	@echo ">> fetching arduino 1.5.x sources..."
