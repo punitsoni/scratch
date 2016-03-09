@@ -1,7 +1,9 @@
 PROJECT = led
 
+# C Sources for the project
 C_SRCS = led.c
 
+# C++ Sources for the project
 CXX_SRCS =
 
 ################################################################################
@@ -41,4 +43,4 @@ clean:
 cleanlib: clean
 	make -f libarduino.mk clean
 
-cleanall: clean clean-src cleanlib
+cleanall: clean cleanlib

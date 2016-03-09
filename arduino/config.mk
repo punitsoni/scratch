@@ -17,7 +17,7 @@ ARD_CFLAGS += -I $(ARD_SRC_PATH)/hardware/arduino/avr/variants/$(ARD_BOARD_VARIA
 
 ARD_CXXFLAGS = $(ARD_CFLAGS)
 
-ARD_LDFLAGS +=
+ARD_LDFLAGS =
 
 $(ARD_SRC_PATH):
 	mkdir -p arduino-src
