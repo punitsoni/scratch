@@ -9,6 +9,7 @@ CXX = avr-g++
 AR = avr-ar
 LD = avr-ld
 OBJCOPY = avr-objcopy
+SIZE = avr-size
 
 ARD_CFLAGS = -Os -DF_CPU=16000000UL -mmcu=atmega328p
 ARD_CFLAGS += -I $(ARD_SRC_PATH)/hardware/arduino/avr/cores/arduino
@@ -18,7 +19,8 @@ ARD_CXXFLAGS = $(ARD_CFLAGS)
 
 ARD_LDFLAGS +=
 
-arduino-src:
+$(ARD_SRC_PATH):
+	mkdir -p arduino-src
 	@echo ">> fetching arduino 1.5.x sources..."
 	wget https://github.com/arduino/Arduino/archive/ide-1.5.x.zip
 	unzip ide-1.5.x.zip

@@ -1,4 +1,4 @@
-default: libarduino.a
+all: libarduino.a
 
 include config.mk
 
@@ -11,12 +11,11 @@ OBJS = $(patsubst %.c,%.o,$(C_SRCS))
 OBJS += $(patsubst %.cpp,%.o,$(CXX_SRCS))
 
 CFLAGS = $(ARD_CFLAGS)
-
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(ARD_CXXFLAGS)
 
 libarduino.a: $(OBJS)
 	$(AR) rcs libarduino.a $^
-	@echo "DONE."
+	@echo "[$@] DONE."
 
 # remove build artifacts
 clean:
