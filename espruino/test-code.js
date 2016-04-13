@@ -11,6 +11,9 @@ setInterval(function() {
 
 var wifi = require("Wifi");
 
+var http = require("http");
+
+
 function onInit() {
   console.log("HELLO from espruino");
   
@@ -22,6 +25,11 @@ function onInit() {
     });
   });
   
+  http.createServer(function (req, res) {
+    res.writeHead(200);
+    res.end("Hello World");
+  }).listen(80);
+  console.log("HTTP server created");
 }
 
 onInit();
