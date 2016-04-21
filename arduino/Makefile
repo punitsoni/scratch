@@ -1,3 +1,4 @@
+# Project Name
 PROJECT = led
 
 # C Sources for the project
@@ -7,8 +8,6 @@ C_SRCS = led.c
 CXX_SRCS =
 
 ################################################################################
-all: $(PROJECT).hex
-
 include config.mk
 
 OBJS = $(patsubst %.c,%.o,$(C_SRCS))
@@ -20,10 +19,13 @@ CXXFLAGS = $(ARD_CXXFLAGS) -g -Wall
 
 LDFLAGS = $(ARD_LDFLAGS)
 
+all: $(PROJECT).hex
+	@echo "DONE."
+
 $(PROJECT).hex: $(PROJECT).elf
 	$(OBJCOPY) -O ihex -R .eeprom $(PROJECT).elf $(PROJECT).hex
 
-$(PROJECT).elf: $(OBJS) libarduino.a
+$(PROJECT).elf: libarduino.a $(OBJS)
 	$(LD) $(LDFLAGS) -o $(PROJECT).elf $(OBJS) libarduino.a
 	@echo "-------- PROGRAM SIZE --------"
 	@$(SIZE) -A $(PROJECT).elf
