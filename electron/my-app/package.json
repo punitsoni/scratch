@@ -7,8 +7,5 @@
   },
   "devDependencies": {
     "electron-prebuilt": "^0.37.5"
-  },
-  "dependencies": {
-    "serialport": "^2.0.6"
   }
 }

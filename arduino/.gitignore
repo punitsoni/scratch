@@ -3,4 +3,3 @@ arduino-src
 *.o
 *.a
 led
-*.elf

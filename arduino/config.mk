@@ -19,14 +19,12 @@ ARD_CXXFLAGS = $(ARD_CFLAGS)
 
 ARD_LDFLAGS =
 
-default: all
-
-arduino-src:
-	#mkdir -p $(ARD_SRC_PATH)
+$(ARD_SRC_PATH):
+	mkdir -p arduino-src
 	@echo ">> fetching arduino 1.5.x sources..."
 	wget https://github.com/arduino/Arduino/archive/ide-1.5.x.zip
 	unzip ide-1.5.x.zip
-	mv Arduino-ide-1.5.x arduino-src
+	mv Arduino-ide-1.5.x $(ARD_SRC_PATH)
 	rm -f ide-1.5.x.zip
 	@echo ">> fetch complete."
 
