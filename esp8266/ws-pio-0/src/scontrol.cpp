@@ -2,20 +2,27 @@
 #include <cstdio>
 #include <ESP8266Wifi.h>
 
+namespace neptune {
+
 SwController* SwController::obj = NULL;
 
 SwController::SwController():
 server(80)
 {
-    if (obj == NULL)
-        obj = this;
+    server.onEvent(SwController::websocketEventCb);
+    pinMode(led_pin, OUTPUT);
+}
+
+SwController* SwController::getInstance()
+{
+    static SwController controller;
+    controller.obj = &controller;
+    return &controller;
 }
 
 void SwController::start()
 {
-    server.onEvent(SwController::websocketEventCb);
     server.begin();
-    pinMode(led_pin, OUTPUT);
     Serial.print("websocket server started at ws://" + String(WiFi.localIP()));
 }
 
@@ -30,22 +37,25 @@ void SwController::update()
         return;
     }
 }
+void SwController::updateSwitch(bool val)
+{
+    sw_state = val;
+    digitalWrite(led_pin, (sw_state) ? LOW : HIGH);
+    for(int i=0; i<MAX_CLIENTS; i++) {
+        if (clients[i].connected == true) {
+            server.sendTXT(clients[i].id, "S_" + (sw_state) ? "ON" : "OFF");
+        }
+    }
+}
 
 void SwController::onMessage(uint8_t client_id, const String& message)
 {
     Serial.println("[MSG_IN] " + message);
-    uint8_t val;
-    if (message == "C ON") {
-        val = LOW;
-        sw_state = true;
-    } else if(message == "C OFF") {
-        val = HIGH;
-        sw_state = false;
-    } else {
-        return;
+    if (message == "C_ON") {
+        updateSwitch(true);
+    } else if(message == "C_OFF") {
+        updateSwitch(false);
     }
-    digitalWrite(led_pin, (sw_state) ? LOW : HIGH);
-    server.sendTXT(client_id, "S " + (sw_state) ? "ON" : "OFF");
 }
 
 void SwController::onClientConnected(uint8_t client_id)
@@ -59,6 +69,13 @@ void SwController::onClientConnected(uint8_t client_id)
         return;
     }
     Serial.println("Client " + String(client_id) + " connected.");
+
+    for(int i=0; i<MAX_CLIENTS; i++) {
+        if (clients[i].connected == false) {
+            clients[i].id = client_id;
+            clients[i].connected = true;
+        }
+    }
     server.sendTXT(client_id, String("HELLO"));
 }
 
@@ -66,6 +83,11 @@ void SwController::onClientDisconnected(uint8_t client_id)
 {
     Serial.println("Client " + String(client_id) + " disconnected.");
     num_clients--;
+    for(int i=0; i<MAX_CLIENTS; i++) {
+        if (clients[i].id == client_id) {
+            clients[i].connected = false;
+        }
+    }
 }
 
 void SwController::websocketEventCb(uint8_t num, WStype_t type,
@@ -84,4 +106,6 @@ void SwController::websocketEventCb(uint8_t num, WStype_t type,
     case WStype_BIN:
         break;
     }
+}
+
 }

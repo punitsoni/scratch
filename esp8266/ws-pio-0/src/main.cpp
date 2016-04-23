@@ -5,7 +5,7 @@
 const char WIFI_SSID[] = "Hydra";
 const char WIFI_PASS[] = "K5x48Vz3";
 
-SwController ctrl;
+SwController *ctrl;
 
 void setup()
 {
@@ -17,10 +17,11 @@ void setup()
         delay(100);
     }
     Serial.println("Wifi Connected.");
-    ctrl.start();
+    ctrl = SwController::getInstance();
+    ctrl->start();
 }
 
 void loop()
 {
-    ctrl.update();
+    ctrl->update();
 }
