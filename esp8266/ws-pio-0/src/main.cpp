@@ -5,7 +5,9 @@
 const char WIFI_SSID[] = "Hydra";
 const char WIFI_PASS[] = "K5x48Vz3";
 
-SwController *ctrl;
+
+
+neptune::SwController *ctrl;
 
 void setup()
 {
@@ -17,7 +19,7 @@ void setup()
         delay(100);
     }
     Serial.println("Wifi Connected.");
-    ctrl = SwController::getInstance();
+    ctrl = neptune::SwController::getInstance();
     ctrl->start();
 }
 

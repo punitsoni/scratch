@@ -23,7 +23,7 @@ SwController* SwController::getInstance()
 void SwController::start()
 {
     server.begin();
-    Serial.print("websocket server started at ws://" + String(WiFi.localIP()));
+    Serial.print("websocket server started at ws://" + WiFi.localIP());
 }
 
 void SwController::update()
@@ -41,9 +41,12 @@ void SwController::updateSwitch(bool val)
 {
     sw_state = val;
     digitalWrite(led_pin, (sw_state) ? LOW : HIGH);
+
+    String resp = String("S_") + ((sw_state) ? "ON" : "OFF");
+    Serial.println("resp: " + resp);
     for(int i=0; i<MAX_CLIENTS; i++) {
         if (clients[i].connected == true) {
-            server.sendTXT(clients[i].id, "S_" + (sw_state) ? "ON" : "OFF");
+            server.sendTXT(clients[i].id, resp);
         }
     }
 }
@@ -77,6 +80,7 @@ void SwController::onClientConnected(uint8_t client_id)
         }
     }
     server.sendTXT(client_id, String("HELLO"));
+    updateSwitch(sw_state);
 }
 
 void SwController::onClientDisconnected(uint8_t client_id)
