@@ -2,10 +2,8 @@
 #include <ESP8266Wifi.h>
 #include "scontrol.h"
 
-const char WIFI_SSID[] = "Hydra";
-const char WIFI_PASS[] = "K5x48Vz3";
-
-
+const char WIFI_SSID[] = "ncsu";
+const char WIFI_PASS[] = "cocacola";
 
 neptune::SwController *ctrl;
 
@@ -19,6 +17,7 @@ void setup()
         delay(100);
     }
     Serial.println("Wifi Connected.");
+    Serial.println(WiFi.localIP());
     ctrl = neptune::SwController::getInstance();
     ctrl->start();
 }

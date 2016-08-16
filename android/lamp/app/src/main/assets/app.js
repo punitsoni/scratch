@@ -7,7 +7,7 @@ var ws;
 
 if ("WebSocket" in window)
 {
-    var ws = new WebSocket("ws://10.73.210.103");
+    var ws = new WebSocket("ws://10.0.1.73");
 
     ws.onopen = function()
     {
