@@ -20,3 +20,13 @@ python main.py
     - buttons/sliders for control
 - Add canny edge detection using opencv
 - Implement Hough Transform for Lines
+
+### using virtualenvwrapper
+
+#### Activate the cv environment
+
+workon cv
+
+#### Deactivate venv
+
+deactivate
