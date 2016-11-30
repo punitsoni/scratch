@@ -12,6 +12,6 @@ wget https://github.com/punitsoni/dotfiles/archive/master.zip -P /tmp/ > /dev/nu
 unzip /tmp/master.zip > /dev/null
 mv dotfiles-master dotfiles
 rm -f /tmp/master.zip
-cd dotfiles
-echo "y\ny\ny\n" | ./setup.sh
+#cd dotfiles
+#echo "y\ny\ny\n" | ./setup.sh
 echo "DONE."
