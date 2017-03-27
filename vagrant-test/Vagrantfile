@@ -1,8 +1,12 @@
 Vagrant.configure("2") do |config|
   # Ubuntu 14.04 base
   config.vm.box = "ubuntu/trusty64"
+
+  # system configuration
   config.vm.provision "systemconfig", type: "shell",
-    path: "vagrant/systemconfig.sh", privileged: true
+                      path: "vagrant/systemconfig.sh", privileged: true
+
+  # default user configuration
   config.vm.provision "userconfig", type: "shell",
-    path: "vagrant/userconfig.sh", privileged: false
+                      path: "vagrant/userconfig.sh", privileged: false
 end
