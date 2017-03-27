@@ -5,15 +5,17 @@
   "main": "server.js",
   "scripts": {
     "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "babel-node server.js",
+    "server": "nodemon server.js --exec babel-node",
     "client": "babel-node start_client.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "nodemon": "^1.11.0",
     "socket.io": "^1.7.3"
   },
   "devDependencies": {
+    "babel-preset-es2015": "^6.24.0",
     "concurrently": "^3.4.0"
   }
 }

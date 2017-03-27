@@ -1,0 +1,7 @@
+{
+    "ignore": [
+        "client/",
+        "start_client.js",
+        "notes.txt"
+    ]
+}
