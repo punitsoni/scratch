@@ -1,0 +1,6 @@
+use "npm start" to start the development server.
+This starts a webpack-dev-server which will act as
+a proxy for our actual API server (server.js)
+
+Use localhost:3000 from the client to open the react app
+application
