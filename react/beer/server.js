@@ -1,17 +1,18 @@
-var http = require("http");
-var url = require('url');
-var fs = require('fs');
-var io = require('socket.io');
-var server = http.createServer();
-
-server.listen(8000);
-
-var listener = io.listen(server);
-
 import seed from "./seed"
+const express = require('express');
+const http = require('http');
+const socketio = require('socket.io');
 
+var app = express();
+var server = http.createServer(app);
+//var io = socketio(server, {'path': '/socket.io'});
+var io = socketio(server);
 
-listener.sockets.on('connection', function(socket){
+app.get('/', function(request, response) {
+    response.send("Hello, there!");
+});
+
+io.on('connection', function(socket) {
     //send data to client
     setInterval(function(){
         socket.emit('date', {'date': new Date()});
@@ -22,4 +23,7 @@ listener.sockets.on('connection', function(socket){
     });
 });
 
-console.log('server listening on port 8000');
+/* start the server */
+server.listen(8000, () => {
+    console.log('server listening on port 8000');
+});
