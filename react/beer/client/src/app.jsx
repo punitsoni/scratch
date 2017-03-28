@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import io from 'socket.io-client';
 
-let socket = io.connect();
+//let socket = io('http://localhost:8000', {path: '/api/socket.io/'});
+let socket = io('http://localhost:8000');
 
 class App extends Component {
 

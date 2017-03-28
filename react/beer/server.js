@@ -1,19 +1,19 @@
 import seed from "./seed"
-const express = require('express');
-const http = require('http');
-const socketio = require('socket.io');
+import express from "express"
+import http from "http"
+import socket_io from "socket.io"
 
 var app = express();
 var server = http.createServer(app);
-//var io = socketio(server, {'path': '/socket.io'});
-var io = socketio(server);
+//var io = socketio({'path': '/api/socket.io'});
+var io = socket_io(server);
 
 app.get('/', function(request, response) {
     response.send("Hello, there!");
 });
 
 io.on('connection', function(socket) {
-    //send data to client
+    /* send Date to client every second */
     setInterval(function(){
         socket.emit('date', {'date': new Date()});
     }, 1000);
@@ -25,5 +25,5 @@ io.on('connection', function(socket) {
 
 /* start the server */
 server.listen(8000, () => {
-    console.log('server listening on port 8000');
+    console.log('API server listening on port 8000');
 });
