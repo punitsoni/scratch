@@ -30,10 +30,10 @@ class App extends Component {
         this.setState({date: data.date});
     }
 
-    handleSensor(data) {
-        var s = this.state.sensors;
-        s.push(data.name);
-        this.setState({"sensors": s});
+    handleSensor(sensor) {
+        var slist = this.state.sensors;
+        slist.push(sensor);
+        this.setState({"sensors": slist});
     }
 
     render() {
@@ -54,9 +54,32 @@ class Sensorlist extends React.Component {
         return (
             <div>
                 <h3>Available Sensors</h3>
-                <ul>
-                    { this.props.sensors.map((sensor) => <li> {sensor} </li>) }
-                </ul>
+                {
+                    this.props.sensors.map((sensor) => {
+                        return(
+                            <SensorItem
+                                key={sensor.id.toString()}
+                                name={sensor.name}
+                                datatype={sensor.datatype}
+                                value={"value"}
+                            />
+                        );
+                    })
+                }
+            </div>
+        );
+    }
+}
+
+class SensorItem extends React.Component {
+    render() {
+        return (
+            <div className="well well-sm">
+                <h4>{ this.props.name }</h4>
+                <button type="button" className="btn btn-success">start</button>
+                <p>{this.props.datatype}</p>
+                <p>value = {this.props.value}</p>
+                <hr/>
             </div>
         );
     }

@@ -5,7 +5,6 @@ import socket_io from "socket.io"
 
 var app = express();
 var server = http.createServer(app);
-//var io = socketio({'path': '/api/socket.io'});
 var io = socket_io(server);
 
 app.get('/', function(request, response) {
@@ -14,13 +13,23 @@ app.get('/', function(request, response) {
 
 io.on('connection', function(socket) {
     /* send Date to client every second */
-    setInterval(function(){
+    setInterval(function() {
         socket.emit('date', {'date': new Date()});
     }, 1000);
 
-    seed.getSensors(function(name) {
-        socket.emit('sensor', {'name': name});
+    seed.getSensors(function(sensor) {
+        socket.emit("sensor", sensor);
     });
+
+    socket.on('start', function(data) {
+       seed.start(data.id, function(sample) {
+           socket.emit('sample', sample);
+       });
+    });
+
+    socket.on('stop', function(data) {
+        seed.stop(data.id);
+    })
 });
 
 /* start the server */
