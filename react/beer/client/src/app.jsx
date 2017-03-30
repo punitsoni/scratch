@@ -1,88 +1,60 @@
-import React, { Component } from 'react';
-import io from 'socket.io-client';
+import React, {Component} from 'react';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import Mui from './mui';
+import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
-//let socket = io('http://localhost:8000', {path: '/api/socket.io/'});
-let socket = io('http://localhost:8000');
+//import ReactDOM from 'react-dom';
+//import RaisedButton from 'material-ui/RaisedButton';
+import FlatButton from 'material-ui/FlatButton';
+import AppBar from 'material-ui/AppBar';
+import {Card, CardActions, CardHeader, CardText} from 'material-ui/Card';
 
-class App extends Component {
+class App extends React.Component {
 
-    constructor(props) {
-        super(props);
-        this.handleDate = this.handleDate.bind(this);
-        this.handleSensor = this.handleSensor.bind(this);
-        this.state = {
-            date: {},
-            sensors: []
+    render() {
+        var style = {
+            border: "1px solid"
         };
-        console.log('App constructed');
-    }
 
-    componentDidMount() {
-        socket.on('date', this.handleDate);
-        socket.on('sensor', this.handleSensor);
-    }
-
-    componentWillUnmount() {
-        socket.removeListener('date', this.handleDate);
-    }
-
-    handleDate(data) {
-        this.setState({date: data.date});
-    }
-
-    handleSensor(sensor) {
-        var slist = this.state.sensors;
-        slist.push(sensor);
-        this.setState({"sensors": slist});
-    }
-
-    render() {
         return (
-            <div className="App">
-                <h3> Time on server </h3>
-                <div> {this.state.date.toString()} </div>
-                <Sensorlist
-                    sensors={ this.state.sensors }
-                    />
-            </div>
-        );
-    }
-}
-
-class Sensorlist extends React.Component {
-    render() {
-        return (
+            <MuiThemeProvider muiTheme={getMuiTheme(lightBaseTheme)}>
             <div>
-                <h3>Available Sensors</h3>
-                {
-                    this.props.sensors.map((sensor) => {
-                        return(
-                            <SensorItem
-                                key={sensor.id.toString()}
-                                name={sensor.name}
-                                datatype={sensor.datatype}
-                                value={"value"}
-                            />
-                        );
-                    })
-                }
+                <AppBar title="My AppBar" />
+                <MyCard></MyCard>
+                <MyCard></MyCard>
             </div>
+            </MuiThemeProvider>
         );
     }
 }
 
-class SensorItem extends React.Component {
-    render() {
-        return (
-            <div className="well well-sm">
-                <h4>{ this.props.name }</h4>
-                <button type="button" className="btn btn-success">start</button>
-                <p>{this.props.datatype}</p>
-                <p>value = {this.props.value}</p>
-                <hr/>
-            </div>
-        );
-    }
-}
+const MyCard = () => (
+    <Card>
+        <CardHeader
+            title="LSM6DS3"
+            subtitle="Accelerometer"
+        />
+        <CardText>
+            <h2>This is some card text.</h2>
+        </CardText>
+        <CardActions>
+            <FlatButton label="Start" primary={true}/>
+        </CardActions>
+    </Card>
+);
+
+
+const FlatButtonExampleSimple = () => (
+    <div>
+        <FlatButton label="Default" />
+        <FlatButton label="Primary" primary={true} />
+        <FlatButton label="Secondary" secondary={true} />
+        <FlatButton label="Disabled" disabled={true} />
+        <br />
+        <br />
+        <FlatButton label="Full width" fullWidth={true} />
+    </div>
+);
 
 export default App;
