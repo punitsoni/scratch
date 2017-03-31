@@ -18,12 +18,14 @@ io.on('connection', function(socket) {
     }, 1000);
 
     seed.getSensors(function(sensor) {
-        socket.emit("sensor", sensor);
+        socket.emit("sensor_info", sensor);
     });
 
+
     socket.on('start', function(data) {
+        console.log("start");
        seed.start(data.id, function(sample) {
-           socket.emit('sample', sample);
+           socket.emit('sensor_sample_' + data.id, sample);
        });
     });
 

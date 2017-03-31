@@ -3,17 +3,17 @@ var sensors = [
     {
         id: 0,
         name: "ACCEL_001",
-        datatype: "accel",
+        type: "accel",
     },
     {
         id: 1,
         name: "GYRO_001",
-        datatype: "gyro",
+        type: "gyro",
     },
     {
         id: 2,
         name: "MAG_001",
-        datatype: "mag",
+        type: "mag",
     },
 ];
 
