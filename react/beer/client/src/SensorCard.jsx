@@ -63,7 +63,7 @@ class SensorCard extends Component {
                     title={sensor_name}
                     subtitle={sensor_type}
                 />
-                <CardText>
+                <CardText style={{padding:"0px"}}>
                     <SensorData
                         data={this.state.data}
                     />
@@ -89,8 +89,11 @@ class SensorData extends Component {
             paddingLeft: "10px",
             paddingRight: "40px"
         };
+        var ul_style = {
+            margin: "1px"
+        }
         return (
-            <ul style={style}>
+            <ul style={ul_style}>
                 {this.props.data.map((item, idx) => (
                     <li key={idx} style={style}>
                         <span style={{fontSize: "20px"}}>{item.toFixed(4)}</span>
