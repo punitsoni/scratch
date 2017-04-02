@@ -9,20 +9,19 @@ injectTapEventPlugin();
 class SensorCard extends Component {
     constructor(props) {
         super(props);
-
-        this.sample_msg_key = 'sensor_sample_' + this.props.id;
-
+        this.sample_msg_key = `sensor_sample_${this.props.id}`;
         this.handleSensorSample = this.handleSensorSample.bind(this);
-        this.onStart = this.onStart.bind(this);
+        this.onButtonClick = this.onButtonClick.bind(this);
 
         this.state = {
-            data: [0.0, 0.0, 0.0]
+            data: [0.0, 0.0, 0.0],
+            is_streaming: false
         };
     }
 
     componentDidMount() {
-        this.props.socket.on(
-            this.sample_msg_key, this.handleSensorSample);
+        console.log(`key= ${this.sample_msg_key}`);
+        this.props.socket.on(this.sample_msg_key, this.handleSensorSample);
     }
 
     componentWillUnmount() {
@@ -34,27 +33,47 @@ class SensorCard extends Component {
         this.setState({"data": sample.data});
     }
 
-    onStart() {
-        console.log("start " + this.props.sensor_info.type);
-        //this.props.socket.emit('start', {id: this.props.sensor_info.id});
+    onButtonClick() {
+        if (this.state.is_streaming) {
+            console.log("stop " + this.props.sensor_info.type);
+            this.props.socket.emit('stop', {id: this.props.sensor_info.id});
+            this.setState({is_streaming: false});
+        } else {
+            console.log("start " + this.props.sensor_info.type);
+            this.props.socket.emit('start', {id: this.props.sensor_info.id});
+            this.setState({is_streaming: true});
+        }
     }
 
     render() {
         var sensor_name = this.props.sensor_info.name;
         var sensor_type = this.props.sensor_info.type;
-        return(
+        var button_label = "Start";
+        var button_primary = true;
+        var button_secondary = false;
+        if (this.state.is_streaming) {
+            button_label = "Stop";
+            button_primary = false;
+            button_secondary = true;
+        }
+
+        return (
             <Card>
                 <CardHeader
                     title={sensor_name}
                     subtitle={sensor_type}
                 />
                 <CardText>
-                    <SensorData data={this.state.data}/>
+                    <SensorData
+                        data={this.state.data}
+                    />
                 </CardText>
                 <CardActions>
                     <FlatButton
-                        label="Start" primary={true}
-                        onTouchTap={this.onStart()}
+                        label={button_label}
+                        primary={button_primary}
+                        secondary={button_secondary}
+                        onClick={this.onButtonClick}
                     />
                 </CardActions>
             </Card>
@@ -74,7 +93,7 @@ class SensorData extends Component {
             <ul style={style}>
                 {this.props.data.map((item, idx) => (
                     <li key={idx} style={style}>
-                        <span style={{fontSize: "20px"}}>{item}</span>
+                        <span style={{fontSize: "20px"}}>{item.toFixed(4)}</span>
                     </li>
                 ))}
             </ul>

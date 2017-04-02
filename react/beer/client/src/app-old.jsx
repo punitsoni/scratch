@@ -19,6 +19,7 @@ class App extends Component {
 
     componentDidMount() {
         socket.on('date', this.handleDate);
+        scoket.
         socket.on('sensor', this.handleSensor);
     }
 

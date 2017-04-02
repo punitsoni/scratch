@@ -27,20 +27,24 @@ var seed = {
     },
 
     start: function(id, on_sample) {
+        console.log("seed start");
         timer = setInterval(function(){
             var sample = {
                 id: id,
+
                 data: [
                     10 * Math.random(),
                     10 * Math.random(),
                     10 * Math.random()
                 ]
             };
+            console.log("sample generated");
             on_sample(sample);
-        }, 1000);
+        }, 100);
     },
 
     stop: function(id) {
+        console.log("seed stop");
         clearInterval(timer);
     }
 };

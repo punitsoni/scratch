@@ -12,26 +12,32 @@ app.get('/', function(request, response) {
 });
 
 io.on('connection', function(socket) {
-    /* send Date to client every second */
-    setInterval(function() {
-        socket.emit('date', {'date': new Date()});
-    }, 1000);
+    console.log("client connected");
 
-    seed.getSensors(function(sensor) {
-        socket.emit("sensor_info", sensor);
+    socket.on('get_sensors', function() {
+        seed.getSensors(function(sensor) {
+            socket.emit("sensor_info", sensor);
+        });
     });
-
 
     socket.on('start', function(data) {
         console.log("start");
-       seed.start(data.id, function(sample) {
-           socket.emit('sensor_sample_' + data.id, sample);
-       });
+        seed.start(data.id, function(sample) {
+            var key = 'sensor_sample_' + data.id;
+            console.log(`sending ${key} ${sample}`);
+            socket.emit(key, sample);
+        });
     });
 
     socket.on('stop', function(data) {
+        console.log("start");
         seed.stop(data.id);
-    })
+    });
+
+    socket.on('disconnect', function() {
+        console.log('client disconnected');
+        seed.stop(0);
+    });
 });
 
 /* start the server */
