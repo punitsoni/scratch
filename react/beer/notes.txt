@@ -4,3 +4,9 @@ a proxy for our actual API server (server.js)
 
 Use localhost:3000 from the client to open the react app
 application
+
+webpack dev server has an issue where it consumes very high
+cpu monitoring changes to file. One workaround to this issue on
+macOs it to 
+
+    npm install fsevents

@@ -63,7 +63,7 @@ class SensorCard extends Component {
                     title={sensor_name}
                     subtitle={sensor_type}
                 />
-                <CardText style={{padding:"0px"}}>
+                <CardText style={{padding: "0px"}}>
                     <SensorData
                         data={this.state.data}
                     />

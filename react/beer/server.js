@@ -24,7 +24,7 @@ io.on('connection', function(socket) {
         console.log("start");
         seed.start(data.id, function(sample) {
             var key = 'sensor_sample_' + data.id;
-            console.log(`sending ${key} ${sample}`);
+            //console.log(`sending ${key} ${sample}`);
             socket.emit(key, sample);
         });
     });

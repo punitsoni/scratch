@@ -66,7 +66,7 @@ class App extends Component {
                         open={this.state.drawer_open}
                         onRequestChange={(open) => this.setState({drawer_open: open})}
                     >
-                        <Card>
+                        <Card zDepth={0}>
                             <div
                                 style={{height:"100px", width:"100%", clear:"both"}}>
                             </div>

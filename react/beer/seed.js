@@ -38,7 +38,6 @@ var seed = {
                     10 * Math.random()
                 ]
             };
-            console.log("sample generated");
             on_sample(sample);
         }, 100);
     },
