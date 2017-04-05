@@ -3,14 +3,11 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import AppBar from 'material-ui/AppBar';
-import io from 'socket.io-client';
 import Drawer from 'material-ui/Drawer';
 import MenuItem from 'material-ui/MenuItem';
 import {Card, CardActions, CardHeader, CardText} from 'material-ui/Card';
-
-import SensorCard from './SensorCard';
-
-const socket = io('http://localhost:8000');
+import StreamApp from './StreamApp';
+import MonitorApp from './MonitorApp';
 
 class App extends Component {
 
@@ -83,80 +80,5 @@ class App extends Component {
         );
     }
 }
-
-class StreamApp extends Component {
-
-    constructor(props) {
-        super(props);
-        this.onSensorInfo = this.onSensorInfo.bind(this);
-        this.onServerDisconnected = this.onServerDisconnected.bind(this);
-
-        this.state = {
-            sensors: [],
-        };
-    }
-
-    componentDidMount() {
-        socket.on('sensor_info', this.onSensorInfo);
-        socket.on('disconnected', this.onServerDisconnected);
-        socket.emit('get_sensors');
-    }
-
-    componentWillUnmount() {
-        socket.removeListener('sensor_info', this.onSensorInfo);
-        socket.removeListener('disconnected', this.onServerDisconnected);
-        console.log("unmounted");
-    }
-
-    onServerDisconnected() {
-        console.log('server disconnected');
-        this.setState({sensors: []});
-    }
-
-    onSensorInfo(sensor_info) {
-        var slist = this.state.sensors;
-        slist.push(sensor_info);
-        this.setState({sensors: slist});
-    }
-
-    render() {
-        return (
-            <div>
-                {this.state.sensors.map((sensor) => (
-                    <SensorCard
-                        id={sensor.id}
-                        key={sensor.id}
-                        socket={socket}
-                        sensor_info={sensor}
-                    />
-                ))}
-            </div>
-        );
-    }
-}
-
-class MonitorApp extends Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    componentDidMount() {
-    }
-
-    componentWillUnmount() {
-    }
-
-    render() {
-        return (
-            <div>
-                Hello
-            </div>
-        );
-    }
-}
-
 
 export default App;
