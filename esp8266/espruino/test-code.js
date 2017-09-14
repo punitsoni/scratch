@@ -1,6 +1,6 @@
 var led = Pin(2);
-var WIFI_SSID = "Hydra";
-var WIFI_PASS = "K5x48Vz3";
+var WIFI_SSID = "xxxx";
+var WIFI_PASS = "pppp";
 
 setInterval(function() {
   digitalWrite(led, false);
