@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+    <head>
+    </head>
+    <body>
+        <div id="sketch"></div>
+
+        <h2>Data from device</h2>
+        <p id="device_log"></p>
+
+
+
+        <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.5/p5.js"></script>
+        <script src="sketch.js"></script>
+        <script>
+         var socket = io.connect('http://localhost:8000');
+         socket.on('connect', function(data) {
+             socket.emit('join', 'Hello World from client');
+         });
+
+         socket.on('device_data', function(data) {
+             $('#device_log').append(data + '<br>');
+         });
+        </script>
+
+    </body>
+</html>

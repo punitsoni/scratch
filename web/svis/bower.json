@@ -1,0 +1,21 @@
+{
+  "name": "svis",
+  "description": "",
+  "main": "server.js",
+  "authors": [
+    "Punit Soni <punitxsmart@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.1"
+  }
+}
