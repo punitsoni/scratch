@@ -1,3 +1,5 @@
 Pipfile.lock
-video.mp4
-test.bin
+*.mp4
+*.bin
+*.h264
+.vscode/
