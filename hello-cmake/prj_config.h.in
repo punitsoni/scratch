@@ -1,0 +1,3 @@
+// the configured options and settings for prj
+#define PRJ_VERSION_MAJOR @prj_VERSION_MAJOR@
+#define PRJ_VERSION_MINOR @prj_VERSION_MINOR@

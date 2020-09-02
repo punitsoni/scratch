@@ -1,0 +1,8 @@
+A c++ hello world project to learn CMake build system.
+
+# How to build a CMake project
+
+cd build
+cmake ..
+cmake --build .
+
