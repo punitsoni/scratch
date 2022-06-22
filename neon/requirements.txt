@@ -2,7 +2,7 @@ autopep8==1.4.2
 cycler==0.10.0
 kiwisolver==1.0.1
 matplotlib==3.0.1
-numpy==1.15.3
+numpy==1.22.0
 opencv-python==3.4.3.18
 pkg-resources==0.0.0
 pycodestyle==2.4.0
